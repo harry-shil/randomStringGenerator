@@ -7,4 +7,5 @@
     <string name="invalid_input">Invalid Input</string>
     <string name="delete_item">Are you sure you want to delete this item?</string>
     <string name="delete_all">Are you sure you want delete all the items?</string>
+    <string name="no_data">No data available</string>
 </resources>

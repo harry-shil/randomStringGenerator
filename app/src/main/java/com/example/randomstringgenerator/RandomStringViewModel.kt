@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 class RandomStringViewModel(application: Application) :
@@ -25,15 +26,23 @@ class RandomStringViewModel(application: Application) :
     private val _inputValue = MutableStateFlow<String>("")
     val inputValue = _inputValue.asStateFlow()
 
+    private val _screenLoader = MutableStateFlow<Boolean>(false)
+    val screenLoader = _screenLoader.asStateFlow()
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun fetchRandomString(noOfCharacters: Int, displayToast: (Int) -> Unit) = viewModelScope.launch(Dispatchers.IO) {
-        val result = repository.getRandomString(noOfCharacters, displayToast)
-        Log.d("Result", result.toString())
-        result?.let {
-            _randomStringList.value = listOf(it) + _randomStringList.value
+    fun fetchRandomString(noOfCharacters: Int, displayToast: (Int) -> Unit) =
+        viewModelScope.launch {
+            _screenLoader.value = true
+            withContext(Dispatchers.IO) {
+                val result = repository.getRandomString(noOfCharacters, displayToast)
+                Log.d("Result", result.toString())
+                result?.let {
+                    _randomStringList.value = listOf(it) + _randomStringList.value
+                }
+            }
+            _inputValue.value = ""
+            _screenLoader.value = false
         }
-    }
 
     fun clearAll() {
         _randomStringList.value = emptyList()
@@ -44,7 +53,7 @@ class RandomStringViewModel(application: Application) :
         _randomStringList.value = _randomStringList.value.filterNot { it == item }
     }
 
-    fun updateInputField(value: String){
+    fun updateInputField(value: String) {
         _inputValue.value = value
     }
 }

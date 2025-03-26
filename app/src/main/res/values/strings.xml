@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">RandomStringGenerator</string>
+    <string name="data_not_found">Could not find Data</string>
+    <string name="something_went_wrong">Something went wrong. Please try again!!</string>
+    <string name="permission_denied">You do not have permission to view this content</string>
+    <string name="enter_size">Enter Size</string>
+    <string name="invalid_input">Invalid Input</string>
+    <string name="delete_item">Are you sure you want to delete this item?</string>
+    <string name="delete_all">Are you sure you want delete all the items?</string>
 </resources>

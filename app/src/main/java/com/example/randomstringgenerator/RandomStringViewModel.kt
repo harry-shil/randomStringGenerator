@@ -2,19 +2,17 @@ package com.example.randomstringgenerator
 
 import android.app.Application
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.randomstringgenerator.model.RandomStringData
 import com.example.randomstringgenerator.repository.RandomStringRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.random.Random
 
 class RandomStringViewModel(application: Application) :
     AndroidViewModel(application = application) {
@@ -29,13 +27,15 @@ class RandomStringViewModel(application: Application) :
     private val _screenLoader = MutableStateFlow<Boolean>(false)
     val screenLoader = _screenLoader.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String>("")
+    val errorMessage = _errorMessage.asStateFlow()
+
     @RequiresApi(Build.VERSION_CODES.O)
     fun fetchRandomString(noOfCharacters: Int, displayToast: (Int) -> Unit) =
         viewModelScope.launch {
             _screenLoader.value = true
             withContext(Dispatchers.IO) {
                 val result = repository.getRandomString(noOfCharacters, displayToast)
-                Log.d("Result", result.toString())
                 result?.let {
                     _randomStringList.value = listOf(it) + _randomStringList.value
                 }
@@ -53,7 +53,30 @@ class RandomStringViewModel(application: Application) :
         _randomStringList.value = _randomStringList.value.filterNot { it == item }
     }
 
-    fun updateInputField(value: String) {
-        _inputValue.value = value
+    fun updateInputField(value: String, updateError: (Int) -> Unit) {
+        try{
+            if(value == ""){
+                _inputValue.value = value
+                return
+            }
+            if(value.isDigitsOnly()){
+                _inputValue.value = value.trim()
+                _errorMessage.value = ""
+            }else{
+                updateError(R.string.invalid_input)
+            }
+
+        }catch (error: NumberFormatException){
+            _inputValue.value = ""
+            updateError(R.string.out_of_bounds)
+
+        }catch (error: Exception){
+            _inputValue.value = ""
+            updateError(R.string.something_went_wrong)
+        }
+    }
+
+    fun updateErrorMessage(message: String){
+        _errorMessage.value = message
     }
 }

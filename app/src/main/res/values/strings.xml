@@ -12,7 +12,7 @@
     <string name="clear_all">Clear All</string>
     <string name="field_can_not_be_empty">This field can not be empty or 0</string>
     <string name="empty_string" />
-    <string name="contains_only_numbers">This field contains only numbers</string>
+    <string name="contains_only_numbers">This field can only contain  numbers</string>
     <string name="out_of_bounds">Size is out of bounds. Please try again.</string>
     <string name="fetch_string">Fetch String</string>
     <string name="max_size">Max size: 10,000</string>

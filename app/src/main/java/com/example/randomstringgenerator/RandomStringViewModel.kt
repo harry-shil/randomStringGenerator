@@ -2,6 +2,7 @@ package com.example.randomstringgenerator
 
 import android.app.Application
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.AndroidViewModel
@@ -30,6 +31,9 @@ class RandomStringViewModel(application: Application) :
     private val _errorMessage = MutableStateFlow<String>("")
     val errorMessage = _errorMessage.asStateFlow()
 
+    private val _favoriteList = MutableStateFlow<List<RandomStringData>>(emptyList())
+    val favoriteList = _favoriteList.asStateFlow()
+
     @RequiresApi(Build.VERSION_CODES.O)
     fun fetchRandomString(noOfCharacters: Int, displayToast: (Int) -> Unit) =
         viewModelScope.launch {
@@ -46,37 +50,60 @@ class RandomStringViewModel(application: Application) :
 
     fun clearAll() {
         _randomStringList.value = emptyList()
+        _favoriteList.value = emptyList()
 
     }
 
     fun deleteString(item: RandomStringData) {
         _randomStringList.value = _randomStringList.value.filterNot { it == item }
+        if (_favoriteList.value.contains(item)) {
+            _favoriteList.value = _favoriteList.value.filterNot { item == it }
+        }
     }
 
     fun updateInputField(value: String, updateError: (Int) -> Unit) {
-        try{
-            if(value == ""){
+        try {
+            if (value == "") {
                 _inputValue.value = value
                 return
             }
-            if(value.isDigitsOnly()){
+            if (value.isDigitsOnly()) {
                 _inputValue.value = value.trim()
                 _errorMessage.value = ""
-            }else{
+            } else {
                 updateError(R.string.invalid_input)
             }
 
-        }catch (error: NumberFormatException){
+        } catch (error: NumberFormatException) {
             _inputValue.value = ""
             updateError(R.string.out_of_bounds)
 
-        }catch (error: Exception){
+        } catch (error: Exception) {
             _inputValue.value = ""
             updateError(R.string.something_went_wrong)
         }
     }
 
-    fun updateErrorMessage(message: String){
+    fun updateErrorMessage(message: String) {
         _errorMessage.value = message
+    }
+
+    fun addOrRemoveFromFavorites(item: RandomStringData) {
+        try {
+            if (_favoriteList.value.contains(item)) {
+                _favoriteList.value = _favoriteList.value.filterNot { item == it }
+
+                Log.d("Removed from Favorite", item.value.toString())
+
+                Log.d("Favorite List", _favoriteList.value.toString())
+            } else {
+                _favoriteList.value = listOf(item) + favoriteList.value
+                Log.d("Added to Favorite", item.value.toString())
+            }
+        } catch (error: Exception) {
+            _errorMessage.value = error.message.toString()
+        }
+
+
     }
 }

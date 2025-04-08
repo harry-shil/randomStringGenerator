@@ -16,4 +16,6 @@
     <string name="out_of_bounds">Size is out of bounds. Please try again.</string>
     <string name="fetch_string">Fetch String</string>
     <string name="max_size">Max size: 10,000</string>
+    <string name="favorite_list">Favorite List</string>
+    <string name="no_favorites">No Favorites Selected.</string>
 </resources>

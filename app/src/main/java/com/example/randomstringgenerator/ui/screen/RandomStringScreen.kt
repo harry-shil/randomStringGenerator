@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -72,6 +73,8 @@ fun RandomStringScreen(viewModel: RandomStringViewModel, modifier: Modifier = Mo
     val keyBoardController = LocalSoftwareKeyboardController.current
     val errorShakeAnimation = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
+    val favoriteList = viewModel.favoriteList.collectAsState()
+    val isFilterActive = remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -240,6 +243,7 @@ fun RandomStringScreen(viewModel: RandomStringViewModel, modifier: Modifier = Mo
                     }
                 }
             }
+
             if (randomStringList.value.isEmpty()) {
                 Text(
                     text = stringResource(R.string.no_data),
@@ -247,13 +251,52 @@ fun RandomStringScreen(viewModel: RandomStringViewModel, modifier: Modifier = Mo
                     modifier = Modifier.padding(16.dp)
                 )
             } else {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    IconButton(onClick = {
+                        isFilterActive.value = !isFilterActive.value
+                    }) {
+//                        Text(text = stringResource(R.string.favorite_list))
+                        Icon(
+                            Icons.Default.Favorite,
+                            contentDescription = "Favorite Filter",
+                            tint = if (isFilterActive.value) Color.Red else Color.White
+                        )
+                    }
+                }
+                if (isFilterActive.value && favoriteList.value.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.no_favorites),
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
                 LazyColumn(
                     horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
                 ) {
-                    items(randomStringList.value) { randomString ->
-                        StringItem(randomString, viewModel)
+                    if (isFilterActive.value) {
+                        items(favoriteList.value) { randomString ->
+                            StringItem(
+                                randomString,
+                                viewModel,
+                                favoriteList.value,
+                                randomStringList.value
+                            ) {
+                                isFilterActive.value = it
+                            }
+                        }
+                    } else {
+                        items(randomStringList.value) { randomString ->
+                            StringItem(
+                                randomString,
+                                viewModel,
+                                favoriteList.value,
+                                randomStringList.value
+                            ) {
+                                isFilterActive.value = it
+                            }
+                        }
                     }
                 }
 
@@ -263,6 +306,7 @@ fun RandomStringScreen(viewModel: RandomStringViewModel, modifier: Modifier = Mo
             DeleteDialogBox(onConfirm = {
                 viewModel.clearAll()
                 showDeleteDialog.value = false
+                isFilterActive.value = false
             }, onDismiss = {
                 showDeleteDialog.value = false
             }, message = stringResource(R.string.delete_all))
@@ -285,7 +329,13 @@ fun RandomStringScreen(viewModel: RandomStringViewModel, modifier: Modifier = Mo
 
 
 @Composable
-fun StringItem(item: RandomStringData, viewModel: RandomStringViewModel) {
+fun StringItem(
+    item: RandomStringData,
+    viewModel: RandomStringViewModel,
+    favoriteList: List<RandomStringData>,
+    value: List<RandomStringData>,
+    updateFilter: (Boolean) -> Unit
+) {
     val showItemDeleteDialog = remember { mutableStateOf(false) }
     Card(modifier = Modifier.padding(10.dp)) {
         Row(
@@ -299,6 +349,15 @@ fun StringItem(item: RandomStringData, viewModel: RandomStringViewModel) {
                 text = item.created, modifier = Modifier
                     .padding(horizontal = 2.dp)
             )
+            IconButton(onClick = {
+                viewModel.addOrRemoveFromFavorites(item)
+            }) {
+                Icon(
+                    Icons.Default.Favorite,
+                    contentDescription = "Favorite",
+                    tint = if (favoriteList.contains(item)) Color.Red else Color.White
+                )
+            }
             IconButton(onClick = {
                 showItemDeleteDialog.value = true
             }) {
@@ -323,6 +382,9 @@ fun StringItem(item: RandomStringData, viewModel: RandomStringViewModel) {
         DeleteDialogBox(onConfirm = {
             viewModel.deleteString(item)
             showItemDeleteDialog.value = false
+            if (value.size == 1) {
+                updateFilter(false)
+            }
         }, onDismiss = {
             showItemDeleteDialog.value = false
         }, message = stringResource(R.string.delete_item))
